@@ -6,7 +6,9 @@
   "type": "module",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "dev": "node --watch src/index.js"
+    "dev": "node --watch ./src/index",
+    "dz:push": "npx drizzle-kit generate --config drizzle.config.js",
+    "dz:studio": "npx drizzle-kit studio --config drizzle.config.js"
   },
   "keywords": [],
   "author": "",
@@ -14,12 +16,15 @@
   "packageManager": "pnpm@10.28.2",
   "dependencies": {
     "dotenv": "^17.2.3",
+    "drizzle-orm": "^0.45.1",
     "express": "^5.2.1",
     "jsonwebtoken": "^9.0.3",
-    "mongoose": "^9.1.5"
+    "pg": "^8.18.0"
   },
   "devDependencies": {
     "@types/express": "^5.0.6",
-    "@types/node": "^25.0.9"
+    "@types/node": "^25.0.9",
+    "@types/pg": "^8.16.0",
+    "drizzle-kit": "^0.31.8"
   }
 }
