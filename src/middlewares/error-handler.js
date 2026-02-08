@@ -1,67 +1,49 @@
 const errorHandler = (err, req, res, next) => {
-  const isProduction = process.env.NODE_ENV === "production";
+  // Default response
+  let statusCode = 500;
+  let response = {
+    success: false,
+    message: "Something went wrong on the server",
+  };
 
-  let status = err?.status || err?.statusCode || 500;
-  let message = "Internal Server Error";
-  let details;
+  /**
+   * 1️⃣ Handle Zod / validation-like errors
+   * These errors usually have `details` as an array
+   */
+  if (Array.isArray(err.details)) {
+    statusCode = 400;
+    response.message = "Validation failed";
+    response.errors = {};
 
-  // If the thrown value is an array (e.g. serialized zod errors)
-  if (Array.isArray(err)) {
-    status = 400;
-    details = err;
-    message = err[0]?.message || "Validation error";
-
-    // If it's an object (Error instance or plain object)
-  } else if (err && typeof err === "object") {
-    // Common shapes from validation libs
-    if (Array.isArray(err.errors)) {
-      status = status === 500 ? 400 : status;
-      details = err.errors;
-      message = err.message || err.errors[0]?.message || "Validation error";
-    } else if (Array.isArray(err.issues)) {
-      status = status === 500 ? 400 : status;
-      details = err.issues;
-      message = err.message || err.issues[0]?.message || "Validation error";
-      // Plain object with `error` field
-    } else if (typeof err.error === "string") {
-      message = err.error;
-      // If `message` exists, try to parse JSON inside it (some code throws JSON-stringified arrays)
-    } else if (typeof err.message === "string") {
-      try {
-        const parsed = JSON.parse(err.message);
-        if (Array.isArray(parsed)) {
-          status = 400;
-          details = parsed;
-          message = parsed[0]?.message || "Validation error";
-        } else if (parsed && typeof parsed === "object") {
-          message = parsed.message || parsed.error || err.message;
-          details = parsed;
-        } else {
-          message = err.message;
-        }
-      } catch (e) {
-        message = err.message;
+    err.details.forEach((detail) => {
+      // If path exists, use field name
+      if (detail.path && detail.path.length > 0) {
+        const fieldName = detail.path.join(".");
+        response.errors[fieldName] = detail.message;
+      } else {
+        // No field (invalid body, undefined input)
+        response.message = detail.message;
       }
-      // fallback: return the object as details
-    } else if (Object.keys(err).length > 0) {
-      details = err;
-      message = err.message || err.error || JSON.stringify(err);
-    }
+    });
 
-    // If it's a plain string
-  } else if (typeof err === "string") {
-    status = 400;
-    message = err;
-  } else {
-    message = String(err);
+    return res.status(statusCode).json(response);
   }
 
-  const body = { message };
-  if (details) body.details = details;
-  if (!isProduction && err?.stack) body.stack = err.stack;
+  /**
+   * 2️⃣ Handle custom thrown errors (business logic)
+   * Example: throw new Error("User already exists")
+   */
+  if (err instanceof Error) {
+    statusCode = 400;
+    response.message = err.message;
 
-  console.log(`🟡 LOG - body: `, body);
-  res.status(status).json(body);
+    return res.status(statusCode).json(response);
+  }
+
+  /**
+   * 3️⃣ Fallback for unknown errors
+   */
+  return res.status(statusCode).json(response);
 };
 
 export { errorHandler };

@@ -1,3 +1,3 @@
 import { errorHandler } from "./error-handler.js";
-
-export { errorHandler };
+import { ensureAuthenticated } from "./enusre-auth.js";
+export { errorHandler, ensureAuthenticated };

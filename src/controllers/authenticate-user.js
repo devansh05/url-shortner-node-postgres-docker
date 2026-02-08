@@ -1,13 +1,11 @@
 import dotenv from "dotenv";
 dotenv.config();
-import { eq } from "drizzle-orm";
-import db from "../database/index.js";
-import { usersTable } from "../database/schema.js";
+import { getUserByEmail, createUserFromObject } from "../services/index.js";
 import {
   getSaltAndHashFromString,
   createJwtTokenForUser,
 } from "../utilities/utilities.js";
-import { signUpValidations } from "../validations/index.js";
+import { signUpValidations, loginValidations } from "../validations/index.js";
 
 const signUpUser = async (req, res) => {
   const validatedRequest = await signUpValidations.safeParseAsync(req.body);
@@ -15,32 +13,26 @@ const signUpUser = async (req, res) => {
   if (validatedRequest.error) {
     throw new Error(validatedRequest.error);
   }
-
-  const { name, email, password } = req.body;
+  const { name, email, password } = validatedRequest.data;
   try {
-    const [existingUser] = await db
-      .select()
-      .from(usersTable)
-      .where(eq(usersTable.email, email));
+    const existingUser = await getUserByEmail(email);
+
     if (existingUser) {
-      return res
-        .status(400)
-        .json({ error: "User with this email already present. Please login." });
+      throw new Error({
+        error: "User with this email already present. Please login.",
+      });
     }
 
     const { salt, hashedKeys } = getSaltAndHashFromString("", password);
 
-    const [userAdded] = await db
-      .insert(usersTable)
-      .values({
-        name,
-        email,
-        password: hashedKeys,
-        salt,
-      })
-      .returning({ id: usersTable.id });
+    const userAdded = createUserFromObject({
+      salt,
+      name,
+      email,
+      password: hashedKeys,
+    });
 
-    const jwtToken = createJwtTokenForUser(userAdded);
+    const jwtToken = await createJwtTokenForUser(userAdded);
 
     return res.json({
       message: `Signed up user successfully.`,
@@ -48,9 +40,50 @@ const signUpUser = async (req, res) => {
       token: jwtToken,
     });
   } catch (err) {
-    console.error(`🔴🔴🔴 LOG - : ERROR`, err);
+    throw new Error({
+      error: "SERVER ERROR: ",
+      err,
+    });
+  }
+};
+
+const loginUser = async (req, res) => {
+  const validatedRequest = await loginValidations.safeParseAsync(req.body);
+
+  if (validatedRequest.error) {
+    throw new Error(validatedRequest.error);
+  }
+
+  const { email, password } = validatedRequest.data;
+  try {
+    const existingUser = await getUserByEmail(email);
+
+    if (!existingUser) {
+      return res
+        .status(400)
+        .json({ error: "Unable to find user with this email. Please signup." });
+    }
+
+    const { salt, hashedKeys } = getSaltAndHashFromString(
+      existingUser.salt,
+      password,
+    );
+
+    if (hashedKeys !== existingUser.password || email !== existingUser.email) {
+      throw new Error([{ error: "incorrect username or password" }]);
+    }
+    const jwtToken = createJwtTokenForUser(existingUser);
+
+    req.user = existingUser;
+
+    return res.json({
+      message: `Logged in user successfully.`,
+      userId: existingUser.id,
+      token: jwtToken,
+    });
+  } catch (err) {
     return res.status(400).send("SERVER ERROR: ", err);
   }
 };
 
-export { signUpUser };
+export { signUpUser, loginUser };

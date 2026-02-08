@@ -20,6 +20,6 @@ export const urlTable = pgTable("urls", {
     .references(() => usersTable.id)
     .notNull(),
   createdAt: timestamp().defaultNow().notNull(),
-  shortUrl: text(),
-  longUrl: text(),
+  shortUrl: varchar({length: 300}).notNull().unique(),
+  targetUrl: text(),
 });

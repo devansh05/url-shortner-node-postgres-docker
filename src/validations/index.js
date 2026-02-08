@@ -1,2 +1,6 @@
-import { signUpValidations } from "./sign-up.js";
-export { signUpValidations };
+import {
+  signUpValidations,
+  loginValidations,
+} from "./user-auth-validations.js";
+import { urlValidations } from "./url-validations.js";
+export { signUpValidations, loginValidations, urlValidations };
