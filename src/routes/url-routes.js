@@ -5,7 +5,8 @@ import {
   redirectUser,
   allUrls,
   deleteUrl,
-  allUserUrls
+  allUserUrls,
+  updateUrl
 } from "../controllers/index.js";
 import { ensureAuthenticated } from "../middlewares/index.js";
 
@@ -14,5 +15,6 @@ router.get("/", redirectUser);
 router.get("/urls", ensureAuthenticated, allUrls);
 router.get("/urls/:id", ensureAuthenticated, allUserUrls);
 router.delete("/:id", ensureAuthenticated, deleteUrl);
+router.patch("/update", ensureAuthenticated, updateUrl);
 
 export { router };

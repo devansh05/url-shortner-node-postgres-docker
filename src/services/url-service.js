@@ -1,13 +1,12 @@
 import db from "../database/index.js";
 import { urlTable } from "../database/schema.js";
-import { eq } from "drizzle-orm";
+import { eq, and } from "drizzle-orm";
 
 export async function deleteUrlFromId(id) {
   const [deletedUrl] = await db
     .delete(urlTable)
     .where(eq(urlTable.id, id))
     .returning({ targetUrl: urlTable.targetUrl });
-  console.log(`🟡 LOG - deletedUrl: `, deletedUrl);
   return deletedUrl;
 }
 
@@ -52,4 +51,19 @@ export async function createShortenedUrl(urlObject) {
     .returning({ id: urlTable.id });
 
   return createdUrl;
+}
+
+export async function updateShortenedUrl(urlObject) {
+  const [updatedUrl] = await db
+    .update(urlTable)
+    .set({ ...urlObject })
+    .where(
+      and(
+        eq(urlTable.userId, urlObject.userId),
+        eq(urlTable.id, urlObject.urlId),
+      ),
+    )
+    .returning({ ...urlTable });
+
+  return updatedUrl;
 }

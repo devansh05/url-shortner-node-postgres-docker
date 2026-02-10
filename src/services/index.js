@@ -5,7 +5,8 @@ import {
   createShortenedUrl,
   getAllUrls,
   deleteUrlFromId,
-  getAllUrlsByUserId
+  getAllUrlsByUserId,
+  updateShortenedUrl,
 } from "./url-service.js";
 export {
   getUserByEmail,
@@ -15,5 +16,6 @@ export {
   getUrlFromShortCode,
   getAllUrls,
   deleteUrlFromId,
-  getAllUrlsByUserId
+  getAllUrlsByUserId,
+  updateShortenedUrl,
 };

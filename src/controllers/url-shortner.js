@@ -9,6 +9,7 @@ import {
   getAllUrls,
   deleteUrlFromId,
   getAllUrlsByUserId,
+  updateShortenedUrl,
 } from "../services/index.js";
 
 const shortenUrl = async (req, res) => {
@@ -29,7 +30,7 @@ const shortenUrl = async (req, res) => {
   const user = req.user;
 
   if (!user.id) {
-    throw new Error({ message: "Login in beofre shortening url." });
+    throw new Error({ message: "Login in before shortening url." });
   }
 
   const createdUrl = await createShortenedUrl({
@@ -60,7 +61,6 @@ const allUrls = async (req, res) => {
   res.status(200).json([...allUrls]);
 };
 const allUserUrls = async (req, res) => {
-  console.log(`🟡 LOG - : Reached `, req.params.id);
   const allUrls = await getAllUrlsByUserId(req.params.id);
   res.status(200).json([...allUrls]);
 };
@@ -70,9 +70,41 @@ const deleteUrl = async (req, res) => {
     const deletedUrl = await deleteUrlFromId(id);
     res.status(200).json({ message: "Deleted successfully.", id: deletedUrl });
   } catch (err) {
-    console.log(`🟡 LOG - err: `, err);
+    throw new Error(err);
+  }
+};
+const updateUrl = async (req, res) => {
+  try {
+    const validatedRequest = await urlValidations.safeParseAsync(req.body);
+    if (validatedRequest.error) {
+      throw new Error(validatedRequest.error);
+    }
+
+    const { url } = validatedRequest.data;
+    const userId = req.user.id;
+    const existingUrl = await getUrl(url, "");
+    const shortCode = nanoid(6);
+    if (!existingUrl) {
+      throw new Error({ message: "Url doesnot exists." });
+    }
+
+    if (!userId) {
+      throw new Error({ message: "Login in before shortening url." });
+    }
+
+    const updatedUrl = await updateShortenedUrl({
+      userId,
+      shortUrl: shortCode,
+      targetUrl: url,
+      urlId: existingUrl.id,
+    });
+
+    res
+      .status(201)
+      .json({ message: "Updated url successfully.", ...updatedUrl });
+  } catch (err) {
     throw new Error(err);
   }
 };
 
-export { shortenUrl, redirectUser, allUrls, deleteUrl, allUserUrls };
+export { shortenUrl, redirectUser, allUrls, deleteUrl, allUserUrls, updateUrl };
