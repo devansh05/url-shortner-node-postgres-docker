@@ -4,6 +4,7 @@ import {
   redirectUser,
   allUrls,
   deleteUrl,
+  allUserUrls
 } from "./url-shortner.js";
 export {
   signUpUser,
@@ -12,4 +13,5 @@ export {
   redirectUser,
   allUrls,
   deleteUrl,
+  allUserUrls
 };

@@ -37,6 +37,14 @@ export async function getAllUrls() {
   return allUrls;
 }
 
+export async function getAllUrlsByUserId(userId) {
+  const allUrls = await db
+    .select({ ...urlTable })
+    .from(urlTable)
+    .where(eq(urlTable.userId, userId));
+  return allUrls;
+}
+
 export async function createShortenedUrl(urlObject) {
   const [createdUrl] = await db
     .insert(urlTable)

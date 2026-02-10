@@ -8,6 +8,7 @@ import {
   getUrlFromShortCode,
   getAllUrls,
   deleteUrlFromId,
+  getAllUrlsByUserId,
 } from "../services/index.js";
 
 const shortenUrl = async (req, res) => {
@@ -58,6 +59,11 @@ const allUrls = async (req, res) => {
   const allUrls = await getAllUrls();
   res.status(200).json([...allUrls]);
 };
+const allUserUrls = async (req, res) => {
+  console.log(`🟡 LOG - : Reached `, req.params.id);
+  const allUrls = await getAllUrlsByUserId(req.params.id);
+  res.status(200).json([...allUrls]);
+};
 const deleteUrl = async (req, res) => {
   try {
     const { id } = req.params;
@@ -69,4 +75,4 @@ const deleteUrl = async (req, res) => {
   }
 };
 
-export { shortenUrl, redirectUser, allUrls, deleteUrl };
+export { shortenUrl, redirectUser, allUrls, deleteUrl, allUserUrls };
